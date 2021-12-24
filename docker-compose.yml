@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  
+  todo-server:
+    build:
+      context: ./backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend/:/usr/src/app/
+    ports:
+      - 8009:8000
+      - 3002:3002
+    env_file:
+      - ./backend/.env.dev
+    depends_on:
+      - todo-db
+
+  todo-db:
+    image: postgres:13-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=todo
+      - POSTGRES_PASSWORD=todo
+      - POSTGRES_DB=todo_dev
+  
+  todo-client:
+    build:
+      context: ./frontend
+    command: npm start
+    container_name: todo-client
+    depends_on:
+      - todo-server
+    ports:
+      - 3001:3000
+    stdin_open: true
+    volumes:
+      - ./frontend:/usr/src/app
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_BASE_URL=http://localhost:8009
+
+
+volumes:
+  postgres_data:
